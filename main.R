@@ -4,9 +4,8 @@ library(gridExtra)
 nTree=50 #nombre d'arbres dans la forêt initiale
 
 #on génère une foret d'arbres de taille nTree, ainsi que la matrice des "distances" (distance à définir plus précisément)
-res=generate_distance(nTree)
-d=res[[1]]#on stocke la matrice des dstances
-foret=res[[2]]#on stocke la foret
+foret=generate_forest(nTree)#on stocke la foret
+d=distance_matrix(foret)#on stocke la matrice des dstances
 g1=plot_forest(foret, 1, nTree)+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres")#on stocke le graphe
 
