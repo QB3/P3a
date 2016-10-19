@@ -12,4 +12,6 @@ il génère une forêt aléatoire ainsi que la matrice des distances associée (
 il sélectionne les arbres les  plus éloignés pour la distance, les plus différents
 
 
-### main qui appelle des fonctions dans ces deux fichiers, et qui trace les graphes
+### "main"
+
+qui appelle des fonctions dans ces deux fichiers, et qui trace les graphes
