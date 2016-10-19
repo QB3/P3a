@@ -1,5 +1,5 @@
 #source("D:/P3a/P3a_2.R")
-source("/home/qbe/R/P3A/generate_dist.R")
+source("D:/P3A/P3a-master/generate_dist.R")
 
 
 max_dist=function(d, N,k){
@@ -86,6 +86,21 @@ max_dist=function(d, N,k){
     }
     
   }
-  return(a)
+  w =  rep(0, k)
+  for (i in 1:N){
+    k_min = 1
+    dist_min = d[i,1]
+    for(j in 1:k){
+      if(d[i,j]<dist_min){
+        k_min= j
+        dist_min = d[i,j]
+      }
+    }
+    w[k_min] = w[k_min]+1;
+  }
+  for(i in 1:k){
+    w[i] = w[i]/ N
+  }
+  return(a,w)
 }
 

@@ -1,5 +1,5 @@
-#ozone <- read.table("D:/P3A/ozone.txt", quote="\"", comment.char="")
-ozone <- read.table("~/R/P3A/ozone.txt", quote="\"", comment.char="")
+ozone <- read.table("D:/P3A/ozone.txt", quote="\"", comment.char="")
+#ozone <- read.table("~/R/P3A/ozone.txt", quote="\"", comment.char="")
 
 library(dummy)
 library(randomForest)
