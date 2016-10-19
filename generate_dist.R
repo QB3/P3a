@@ -49,5 +49,21 @@ generate_distance=function(nTree){
   return (list(distance_matrix, liste_arbres));
 }
 
-res=generate_distance(50)
+
+plot_forest=function(liste_arbres, test_set, nTree){
+  liste_arbres=foret
+  test_set=test;
+  mse=matrix(0, 1 , nTree)
+  sum=matrix(0, 1, dim(test)[1])
+  
+  for (i in 1:nTree){
+    
+    sum=sum+predict(liste_arbres[[i]], test_set)
+    pred=sum/i
+    mse_arbre=mean((pred-test_set$maxO3)^2)
+    mse[1,i]=mse_arbre
+  }
+  plot(1:nTree, mse)
+  
+}
 
