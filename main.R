@@ -12,7 +12,7 @@ g1=plot_forest(foret, 1, nTree)+geom_point()+xlab(label="nombre d'arbres")+ylab(
 
 
 k = 10 #nmobre d'arbres que l'on souhaite garder dans la foret
-tab=max_dist(d, nTree, k)[2] #indice des arbres à garder dans la foret initiale
+tab=max_dist(d, nTree, k)#indice des arbres à garder dans la foret initiale
 
 liste_arbres_distincts=NULL #on récupère les arbres à garder
 for (i in tab){
