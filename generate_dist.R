@@ -3,6 +3,7 @@ ozone <- read.table("~/R/P3A/ozone.txt", quote="\"", comment.char="")
 
 library(dummy)
 library(randomForest)
+library(ggplot2)
 
 ozone_dummy=dummy(ozone, int=TRUE)
 ozone_dummy=cbind(ozone[,-c(12,13)], ozone_dummy)
@@ -63,7 +64,8 @@ plot_forest=function(liste_arbres, test_set, nTree){
     mse_arbre=mean((pred-test_set$maxO3)^2)
     mse[1,i]=mse_arbre
   }
-  plot(1:nTree, mse)
+  data=data.frame(cbind(t(t(1:nTree)), t(mse)))
+  return(ggplot(data, aes(x=X1, y=X2)))
   
 }
 
