@@ -19,7 +19,7 @@ generate_forest=function(nTree, train){
     mse_arbre=mean((pred-test$feature_to_predict)^2)
     mse[1,i]=mse_arbre
   }
-  plot(1:nTree, mse)
+  #plot(1:nTree, mse)
 
   return (liste_arbres);
 }
