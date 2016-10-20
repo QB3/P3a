@@ -11,7 +11,7 @@ ozone_dummy=cbind(ozone[,-c(12,13)], ozone_dummy)
 
 ozone_dummy=data.frame(ozone_dummy)
 n=dim(ozone_dummy)[1]
-set.seed(2)
+set.seed(5)
 bool=runif(n)<0.30
 
 n=which(names(ozone_dummy)=="maxO3")
@@ -35,7 +35,6 @@ poids=res[[2]]
 
 liste_arbres_distincts=NULL #on récupère les arbres à garder
 for (i in tab_indices){
-  print(i)
   liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
 }
 
