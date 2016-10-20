@@ -61,3 +61,18 @@ plot_forest=function(liste_arbres, test_set, nTree){
   # return(ggplot(data, aes(x=X1, y=X2)))
 
 }
+
+# plot_forest_poids=function(liste_arbres, tab_poids,test_set, nTree){
+#   test_set=test
+#   n=dim(test_set)[1]
+#   pred=matrix(0, n , nTree)
+#   mse=matrix(0, 1, n)
+#   renormaliseur
+# 
+#   for (i in 1:nTree){
+#     pred[,i]=predict(liste_arbres[[i]], test_set)
+#   }  
+#   
+  
+  
+#}
