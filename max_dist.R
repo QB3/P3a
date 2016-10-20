@@ -1,5 +1,5 @@
 #source("D:/P3a/P3a_2.R")
-source("D:/P3A/P3a-master/generate_dist.R")
+#source("D:/P3A/P3a-master/generate_dist.R")
 
 
 max_dist=function(d, N,k){
@@ -72,6 +72,6 @@ max_dist=function(d, N,k){
   for(i in 1:k){
     w[i] = w[i]/ N
   }
-  return(res,w)
+  return(list(res,w))
 }
 

@@ -28,16 +28,18 @@ g1
 d=distance_matrix(liste_arbres)
 
 k = 20 #nmobre d'arbres que l'on souhaite garder dans la foret
-tab=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
+res=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
+tab_indices=res[[1]]
+poids=res[[2]]
 
 liste_arbres_distincts=NULL #on récupère les arbres à garder
-for (i in tab){
+for (i in tab_indices){
   print(i)
   liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
 }
 
 g2=ggplot(plot_forest(liste_arbres_distincts, test, k), aes(x = X1, y=X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
-  labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés")
+  labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés")
 grid.arrange(g1,g2)
 
 g2
