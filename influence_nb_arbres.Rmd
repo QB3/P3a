@@ -1,0 +1,140 @@
+---
+title: "Influence du nombre d'abres"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r chargement des données, echo=F}
+ozone <- read.table("~/R/P3A/ozone.txt", quote="\"", comment.char="")
+source("/home/qbe/R/P3A/generate_dist.R")
+source("/home/qbe/R/P3A/max_dist.R")
+library(gridExtra)
+
+nTree=500
+library(dummy)
+ozone_dummy=dummy(ozone, int=TRUE)
+ozone_dummy=cbind(ozone[,-c(12,13)], ozone_dummy)
+
+ozone_dummy=data.frame(ozone_dummy)
+n=dim(ozone_dummy)[1]
+set.seed(5)
+bool=runif(n)<0.30
+
+n=which(names(ozone_dummy)=="maxO3")
+names(ozone_dummy)[n]="feature_to_predict"
+test=ozone_dummy[bool,]
+train=ozone_dummy[!bool,]
+liste_arbres=generate_forest(nTree, train)
+```
+
+Nous avons tout d'abord tracé la courbe erreur quadratique en fonction du nombre d'arbres dans la forêt d'un random forest pour quelques jeux de données, des jeux de données simulés et le jeu de données ozone.
+
+On a pu observer que le nombre d'arbres n'améliorait pas la prédiction au delà d'un certain seuil.
+On a donc, comme évoqué dans la réunion, tenté de choisir des arbres assez différents puis tenté d'effectuer une pondération en fonction de la représentativité des arbres sélectionnés.
+Le résultat de la pondération est satisfaisant sans être exceptionnel, c'est-à-dire qu'il n'améliore pas toujours la prédiction de manière transcendante (c'est-à-dire que la différence entre prédire avec un certain nombre d'arbres bien choisis et prédire sur un même nombre d'arbres choisis aléatoirement n'est pas toujours importante.
+
+```{r foret initiale, fig.width=12}
+
+g1=ggplot(plot_forest(liste_arbres, test, nTree), aes(X1, X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
+  labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres")#on stocke le graphe
+
+g1
+```
+
+On voit ici que la forêt d'arbre n'est trop grande, 20 arbres suffiraient à prédire correctement.
+
+
+## Détails techniques du choix des arbres : 
+Nous appliquons l'algorithme random forest, nous nous retrouvons donc avec une forêt d'arbres, dont nous savons que beaucoup d'arbres sont redondants. L'idée était de choisir seulement certains arbres (par exemple 15 ou 20) pour retrouver la propriété d'interprétabilité facile des arbres, si possible les arbres les plus différents possibles.
+
+
+## La question qui vient alors est choisir des arbres "différents" en quel sens ?
+
+Nous avons pris, dans un premier temps, la distance :
+
+### Distance
+
+moyenne_quadratique[(preiction - valeur_réelle)(sur un échantillon test indépendant du jeu d'entrainement)]
+
+Une fois cette distance définie nous pouvons calculer la matrice des distances entre chaque arbres.
+
+
+### Alglorithme de sélection
+
+Pour séléctionner les arbres à garder, nous avons appliquer un algorithme qui permet de sélectionner les arbres les plus éloignés au sens de la ditance définie plus haut (une heuristique du problème original NP-complet).
+Puis nous regardons, pour tous les autres arbres de la forêt, de quel arbre ils sont le plus proches, et pondérons en conséquence chacun des arbres sélectionnés.
+
+Nous avons tracé le résultat pour un jeu de données simulées, puis pour le jeu de données ozone (on prédit maxO3).
+
+
+```{r foret reduite, fig.width=12}
+d=distance_matrix(liste_arbres)
+
+
+k = 15 #nmobre d'arbres que l'on souhaite garder dans la foret
+res=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
+tab_indices=res[[1]]
+poids=res[[2]]
+
+liste_arbres_distincts=NULL #on récupère les arbres à garder
+for (i in tab_indices){
+  print(i)
+  liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
+}
+
+g2=ggplot(plot_forest(liste_arbres_distincts, test, k), aes(x = X1, y=X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
+  labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés")
+#g2
+#grid.arrange(g1,g2)
+
+
+#on veut voir le résultat avec pondération
+pred=0;
+for (i in 1:k){
+  pred=pred+predict(liste_arbres_distincts[[i]], test)*poids[i]
+}
+
+#on voit que l'erreur quadratique est plus petite que dans la forêt classique
+mean((pred-test$feature_to_predict)^2)
+
+
+#ploter le tout sur un même graphe
+res_foret_initiale=plot_forest(liste_arbres, test, nTree)
+res_foret_initiale$fill="forêt initiale"
+
+res_foret_selectionnee=plot_forest(liste_arbres_distincts, test, k)
+res_foret_selectionnee$fill="forêt arbres différents, non pondérés"
+data_to_plot=rbind(res_foret_initiale, res_foret_selectionnee)
+data_to_plot=rbind(data_to_plot, c(k, mean((pred-test$feature_to_predict)^2), "forêt arbre différents pondérés"))
+data_to_plot$X1=as.numeric(data_to_plot$X1)
+data_to_plot$X2=as.numeric(data_to_plot$X2)
+
+g3=ggplot(data_to_plot, aes(x=X1, y=X2, color=fill))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
+  labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres")
+
+g3
+
+print(poids)
+```
+
+## Axe de travail
+
+Nous pensons que les principaux prochains axes de travail vont être de tester différentes distances et différents algorithmes pour la sélection des arbres dans la forêt. En particulier nous avons deux choses en tête :
+
+
+* quand on predit à l'aide d'un arbre sur un jeu de données test, on peut voir l'arbre comme un vecteur de dimension la taille du jeu de donée (chaque coordonnées étant la prédiction d'un échantillon), à partir de là on peut appliquer l'algorithme des k-moyennes ou d'autres algorithmes de clusterisation pour regrouper les arbres les plus proches (ici nous choisirions la distance 
+
+* un des aspects étrange de la distance choisie jusqu'ici est qu'elle se base sur un jeu de données, on évalue un jeu de données sur chacun des arbres, puis on compare les résultats. Nous pensions qu'un axe intéressant de reflexion pourrait être d'évaluer la distance entre les arbres de manière intrinsèques, sans jeux de données extérieurs. En effet chaque arbre peut être considéré comme une fonction de R^d (d=nombre de paramètre par échantillon), à valeur réelle, qui, de plus, est constante par morceaux. À partir de ça il doit être possible de trouver une distance maligne, intrinsèque, (sans jeux de données), comme par exemple la norme L2 sur un certain compact bien choisi.
+
+
+* étendre le travail à d'autres jeux de données, notamment de classification
+
+
+
+## Questions
+
+nous sommes preneurs de retours, notamment de votre avis sur les prochaines axes de travail, et de conseils sur des jeux de données intéressants en regression, ou toutes autres remarques telles qu'elles soient.
