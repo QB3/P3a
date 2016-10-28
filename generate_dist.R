@@ -1,9 +1,10 @@
-# <<<<<<< HEAD
+
 
 library(randomForest)
 library(ggplot2)
 
 
+#la fonction generate forest génère une forêt de taille nTree à partir du jeu de données train
 generate_forest=function(nTree, train){
   liste_arbres=list()
   mse=matrix(0, 1 , nTree)
@@ -25,6 +26,7 @@ generate_forest=function(nTree, train){
 }
 
 
+#à partir d'une liste d'arbres (ie une forêt), la fonction distance_matrix génère la matrice des distance entre les arbres
 distance_matrix=function(liste_arbres){
   distance_matrix=matrix(0, nTree, nTree)
   l=1;
@@ -44,6 +46,8 @@ distance_matrix=function(liste_arbres){
 }
 
 
+#plot_forest calcule à partir d'une forêt le risque quadratique sur successivement 1,2,3, ..., nTree arbres
+#la méthode d'aggrégation dans la forêt est ici une moyenne
 plot_forest=function(liste_arbres, test_set, nTree){
   test_set=test
   mse=matrix(0, 1 , nTree)

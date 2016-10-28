@@ -1,6 +1,8 @@
 #source("D:/P3a/P3a_2.R")
 #source("D:/P3A/P3a-master/generate_dist.R")
 
+#la fonction max_dist est l'implémentation de l'algorithme qui à partir de la matrice des distances 
+#renvoie les éléments les plsu éloignés
 
 max_dist=function(d, N,k){
   index <- -1 
