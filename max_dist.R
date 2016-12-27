@@ -1,6 +1,6 @@
 #source("D:/P3a/P3a_2.R")
-source("D:/P3A/generate_dist.R")
-
+#source("D:/P3A/generate_dist.R")
+source("/home/qbe/P3a/generate_dist.R")
 #la fonction max_dist est l'implémentation de l'algorithme qui à partir de la matrice des distances 
 #renvoie les éléments les plsu éloignés
 

@@ -3,18 +3,161 @@ title: "Influence du nombre d'abres"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+```{r generate dist, echo=F}
+
+library(randomForest)
+library(ggplot2)
+#la fonction generate forest génère une forêt de taille nTree à partir du jeu de données train
+generate_forest=function(nTree, train){
+  liste_arbres=list()
+  mse=matrix(0, 1 , nTree)
+  sum=matrix(0, 1,dim(test)[1])
+
+  for (i in 1:nTree){
+    fit <- randomForest(feature_to_predict ~ .,
+                        data=train, importance=TRUE,  ntree=1, mtry=1)
+
+    liste_arbres=c(liste_arbres, list(fit))
+    sum=sum+predict(fit, test)
+    pred=sum/i
+    mse_arbre=mean((pred-test$feature_to_predict)^2)
+    mse[1,i]=mse_arbre
+  }
+  #plot(1:nTree, mse)
+
+  return (liste_arbres);
+}
+
+
+#à partir d'une liste d'arbres (ie une forêt), la fonction distance_matrix génère la matrice des distance entre les arbres
+distance_matrix=function(liste_arbres){
+  distance_matrix=matrix(0, nTree, nTree)
+  l=1;
+  m=1;
+  for (i in liste_arbres){
+    l=1
+    for (j in liste_arbres){
+      pred_1=predict(i, test)
+      pred_2=predict(j, test)
+      dist=mean((pred_2-pred_1)^2)
+      distance_matrix[l,m]=dist
+      l=l+1;
+    }
+    m=m+1
+  }
+  return (distance_matrix)
+}
+
+
+#plot_forest calcule à partir d'une forêt le risque quadratique sur successivement 1,2,3, ..., nTree arbres
+#la méthode d'aggrégation dans la forêt est ici une moyenne
+plot_forest=function(liste_arbres, test_set, nTree){
+  test_set=test
+  mse=matrix(0, 1 , nTree)
+  sum=matrix(0, 1, dim(test)[1])
+
+  for (i in 1:nTree){
+
+    sum=sum+predict(liste_arbres[[i]], test_set)
+    pred=sum/i
+    mse_arbre=mean((pred-test_set$feature_to_predict)^2)
+    mse[1,i]=mse_arbre
+  }
+  data=data.frame(cbind(t(t(1:nTree)), t(mse)))
+  return(data)
+  # return(ggplot(data, aes(x=X1, y=X2)))
+
+}
+
+```
+
+```{r max_dist, echo=F}
+
+max_dist=function(d, N,k){
+  index <- -1 
+  max_dis = -1
+  res <- rep(0, k)
+  for (p in 1:N){   
+      num_chosen <- p
+      
+      chosen <- rep(0,N)
+      chosen[num_chosen] <- 1
+      
+      a <- rep(0, k)
+      a[1] <- num_chosen
+      
+      dis_to_set <-rep(0,N)
+      
+      for(i in 1:N){
+          dis_to_set[i] <- d[i,num_chosen]
+      }
+      
+      for( i in 2:k){
+          far <- 1
+          dist <- -1
+          for( j in 1:N){
+              if(chosen[j]==0 & dist<dis_to_set[j]){
+                  dist <- dis_to_set[j]
+                  far <- j
+              }
+          }
+          a[i] <- far
+          chosen[far]<-1
+          for( j in 1:N){
+            if(chosen[j]==0 ){
+                dis_to_set[j] <- min(dis_to_set[j],d[j,far])
+            }
+          }
+          
+      }
+      current_dist <- -1
+      for ( i in 1:k){
+          for(j in 1:k){
+              if(d[a[i],a[j]]>current_dist){
+                current_dist <- d[a[i],a[j]]
+              }  
+          }
+      }
+      if(current_dist>max_dis){
+        max_dist <- current_dist
+        index <- p
+        for(m in 1:k){
+          res[m] = a[m]
+        }
+      }
+  }
+  
+  
+  w =  rep(0, k)
+  for (i in 1:N){
+    k_min = 1
+    dist_min = d[i,res[1]]
+    for(j in 1:k){
+      if(d[i,res[j]]<dist_min){
+        k_min= j
+        dist_min = d[i,res[j]]
+      }
+    }
+    w[k_min] = w[k_min]+1;
+  }
+  for(i in 1:k){
+    w[i] = w[i]/ N
+  }
+  return(list(res,w))
+}
+
+
 ```
 
 
 ```{r chargement des données, echo=F}
-ozone <- read.table("~/R/P3A/ozone.txt", quote="\"", comment.char="")
-source("/home/qbe/R/P3A/generate_dist.R")
-source("/home/qbe/R/P3A/max_dist.R")
+ozone <- read.table("~/P3a/ozone.txt", quote="\"", comment.char="")
+# source("/home/qbe/R/P3A/generate_dist.R")
+# source("/home/qbe/R/P3A/max_dist.R")
 library(gridExtra)
 
-nTree=500
+nTree=100
 library(dummy)
 ozone_dummy=dummy(ozone, int=TRUE)
 ozone_dummy=cbind(ozone[,-c(12,13)], ozone_dummy)

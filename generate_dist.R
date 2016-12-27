@@ -1,5 +1,3 @@
-
-
 library(randomForest)
 library(ggplot2)
 
@@ -12,7 +10,7 @@ generate_forest=function(nTree, train){
 
   for (i in 1:nTree){
     fit <- randomForest(feature_to_predict ~ .,
-                        data=train, importance=TRUE,  ntree=i, mtry=4)
+                        data=train, importance=TRUE,  ntree=1, mtry=2)
 
     liste_arbres=c(liste_arbres, list(fit))
     sum=sum+predict(fit, test)

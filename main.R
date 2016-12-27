@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 source("/home/qbe/R/P3A/max_dist.R")
 library(gridExtra)
 
@@ -24,7 +23,6 @@ g2=plot_forest(liste_arbres_distincts, 1, k)+geom_point()+xlab(label="nombre d'a
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés")
 grid.arrange(g1,g2)
 
-=======
 source("D:P3A/P3a-master/max_dist.R")
 library(gridExtra)
 
@@ -50,5 +48,3 @@ for (i in tab){
 g2=plot_forest(liste_arbres_distincts, 1, k)+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés")
 grid.arrange(g1,g2)
-
->>>>>>> 3d258f4494f043e58a451b2642cc69ca617da9af
