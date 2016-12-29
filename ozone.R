@@ -1,15 +1,17 @@
 source("/home/qbe/P3a/generate_dist.R")
 source("/home/qbe/P3a/max_dist.R")
+source("~/P3a/agg_exp.R")
 library(gridExtra)
+library(ggplot2)
 
 train <- read.csv("~/P3a/ozone_train.csv")
 test <- read.csv("~/P3a/ozone_test.csv")
 
 #on choisit le nombre d'arbres dans la forêt
 nTree=100 
-
+mtry=3
 #on génère la forêt
-liste_arbres=generate_forest(nTree, train) 
+liste_arbres=generate_forest(nTree, train, mtry) 
 
 #on trace le résultats, erreur quadratique en fonction du nombre d'arbres
 g1=ggplot(plot_forest(liste_arbres, test, nTree), aes(X1, X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
@@ -44,8 +46,9 @@ for (i in 1:k){
   pred=pred+predict(liste_arbres_distincts[[i]], test)*poids[i]
 }
 
-
-
+liste_alpha=seq(from=0, to = 0.003, by=0.00005)
+alpha=alpha_opt(liste_arbres_distincts, test, liste_alpha)
+mse_arbres_ponderés=mse_agg_exp(liste_arbres_distincts, alpha, test)
 
 #on calcule l'erreur quadratique pour notre forêt final
 mean((pred-test$feature_to_predict)^2)
@@ -58,7 +61,7 @@ res_foret_initiale$fill="forêt initiale"
 res_foret_selectionnee=plot_forest(liste_arbres_distincts, test, k)
 res_foret_selectionnee$fill="forêt arbres différents, non pondérés"
 data_to_plot=rbind(res_foret_initiale, res_foret_selectionnee)
-data_to_plot=rbind(data_to_plot, c(k, mean((pred-test$feature_to_predict)^2), "forêt arbre différents pondérés"))
+data_to_plot=rbind(data_to_plot, c(k, mse_arbres_ponderés, "forêt arbre différents pondérés"))
 data_to_plot$X1=as.numeric(data_to_plot$X1)
 data_to_plot$X2=as.numeric(data_to_plot$X2)
 

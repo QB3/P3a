@@ -3,14 +3,14 @@ library(ggplot2)
 
 
 #la fonction generate forest génère une forêt de taille nTree à partir du jeu de données train
-generate_forest=function(nTree, train){
+generate_forest=function(nTree, train, MTRY){
   liste_arbres=list()
   mse=matrix(0, 1 , nTree)
   sum=matrix(0, 1,dim(test)[1])
 
   for (i in 1:nTree){
     fit <- randomForest(feature_to_predict ~ .,
-                        data=train, importance=TRUE,  ntree=1, mtry=2)
+                        data=train, importance=TRUE,  ntree=1, mtry=MTRY)
 
     liste_arbres=c(liste_arbres, list(fit))
     sum=sum+predict(fit, test)
@@ -47,9 +47,9 @@ distance_matrix=function(liste_arbres){
 #plot_forest calcule à partir d'une forêt le risque quadratique sur successivement 1,2,3, ..., nTree arbres
 #la méthode d'aggrégation dans la forêt est ici une moyenne
 plot_forest=function(liste_arbres, test_set, nTree){
-  test_set=test
+  #test_set=test
   mse=matrix(0, 1 , nTree)
-  sum=matrix(0, 1, dim(test)[1])
+  sum=matrix(0, 1, dim(test_set)[1])
 
   for (i in 1:nTree){
 
