@@ -3,9 +3,17 @@ source("/home/qbe/P3a/max_dist.R")
 source("~/P3a/agg_exp.R")
 library(gridExtra)
 library(ggplot2)
+library(nnls)
+library(randomForest)
 
 train <- read.csv("~/P3a/ozone_train.csv")
 test <- read.csv("~/P3a/ozone_test.csv")
+
+m=dim(train)[1]
+bool=runif(m)<0.30
+cross_test=train[bool,]
+cross_train=train[!bool,]
+test_dim = dim(cross_test)[1]
 
 #on choisit le nombre d'arbres dans la forêt
 nTree=100 
@@ -24,7 +32,7 @@ d=distance_matrix(liste_arbres)
 k = 10 #nmobre d'arbres que l'on souhaite garder dans la foret
 res=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
 tab_indices=res[[1]] #on récupère le tableau des indices des arbres les plus distincts
-poids=res[[2]] #ainsi que leur poids
+#poids=res[[2]] #ainsi que leur poids
 
 #on récupère les arbres à garder
 liste_arbres_distincts=NULL 
@@ -32,6 +40,19 @@ for (i in tab_indices){
   liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
 }
 
+A = matrix(0,test_dim,k)
+for(i in 1:k){
+  A[,i] = predict(liste_arbres_distincts[[i]], cross_test)
+}
+v = predict(liste_arbres_distincts[[i]], cross_test)
+b = rep(0,test_dim)
+for(i in 1:test_dim){
+  b[i] = v[i]
+}
+fit = nnls(A,b)
+poids = coef(fit)
+s = sum(poids)
+poids = poids/s
 #on trace la diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés
 g2=ggplot(plot_forest(liste_arbres_distincts, test, k), aes(x = X1, y=X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés")
