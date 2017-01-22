@@ -1,4 +1,5 @@
 #pondération avec des poids exponentiels
+#à évaluer éventuellement sur un jeu de données test, ie recalucler le mse, pas le prendre de la forêt
 agg_exp=function(liste_arbres_distincts, alpha){
   pred=0;
   S=0
@@ -40,6 +41,13 @@ alpha_opt=function(liste_arbres_distincts, test, liste_alpha){
   tab=agg_exp_liste_alpha(liste_arbres_distincts, test, liste_alpha)
   m=which.min(tab)
   return(liste_alpha[m])
+}
+
+poids_opt=function(liste_arbres, test, liste_alpha){
+  tab=agg_exp_liste_alpha(liste_arbres_distincts, test, liste_alpha)
+  m=which.min(tab)
+  pred=agg_exp(liste_arbres_distincts, m)
+  return(pred)
 }
 
 # res=alpha_opt(liste_arbres_distincts, test, liste_alpha)
