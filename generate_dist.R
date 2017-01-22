@@ -25,15 +25,20 @@ generate_forest=function(nTree, train, MTRY){
 
 
 #à partir d'une liste d'arbres (ie une forêt), la fonction distance_matrix génère la matrice des distance entre les arbres
-distance_matrix=function(liste_arbres){
+distance_matrix=function(liste_arbres,test){
   distance_matrix=matrix(0, nTree, nTree)
   l=1;
   m=1;
+  H = NULL
+  for (i in liste_arbres){
+    pred=predict(i, test)
+    H = c(H,pred)
+  }
   for (i in liste_arbres){
     l=1
     for (j in liste_arbres){
-      pred_1=predict(i, test)
-      pred_2=predict(j, test)
+      pred_1=H[[m]]
+      pred_2=H[[l]]
       dist=mean((pred_2-pred_1)^2)
       distance_matrix[l,m]=dist
       l=l+1;
@@ -42,6 +47,7 @@ distance_matrix=function(liste_arbres){
   }
   return (distance_matrix)
 }
+
 
 
 #plot_forest calcule à partir d'une forêt le risque quadratique sur successivement 1,2,3, ..., nTree arbres
