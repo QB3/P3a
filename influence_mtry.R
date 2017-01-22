@@ -1,5 +1,5 @@
-nTree=500
-liste_mtry=seq(from=1, to =dim(test)[2], by=2)
+# nTree=500
+# liste_mtry=seq(from=1, to =dim(test)[2], by=2)
 
 final_data=function(nTree, train, liste_mtry, test){
   choix_K=NULL  
@@ -14,7 +14,7 @@ final_data=function(nTree, train, liste_mtry, test){
   return(choix_K)
 }
 
-plot_mse_K=function(nTree, train, liste_mtry, test){
+plot_mse_mtry=function(nTree, train, liste_mtry, test){
   choix_K=final_data(nTree, train, liste_mtry, test)
   ggplot(choix_K, aes(x=X1, y=X2, color=mtry))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
          labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres")
