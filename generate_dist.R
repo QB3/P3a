@@ -2,16 +2,16 @@ library(randomForest)
 library(ggplot2)
 
 
-#la fonction generate forest gÃ©nÃ¨re une forÃªt de taille nTree Ã  partir du jeu de donnÃ©es train
-generate_forest=function(nTree, train, MTRY){
+#la fonction generate forest génère une forêt de taille nTree à partir du jeu de données train
+generate_forest=function(nTree, train,test){
   liste_arbres=list()
   mse=matrix(0, 1 , nTree)
   sum=matrix(0, 1,dim(test)[1])
-
+  
   for (i in 1:nTree){
     fit <- randomForest(feature_to_predict ~ .,
-                        data=train, importance=TRUE,  ntree=1, mtry=MTRY)
-
+                        data=train, importance=TRUE,  ntree=1)
+    
     liste_arbres=c(liste_arbres, list(fit))
     sum=sum+predict(fit, test)
     pred=sum/i
@@ -19,12 +19,12 @@ generate_forest=function(nTree, train, MTRY){
     mse[1,i]=mse_arbre
   }
   #plot(1:nTree, mse)
-
+  
   return (liste_arbres);
 }
 
 
-#Ã  partir d'une liste d'arbres (ie une forÃªt), la fonction distance_matrix gÃ©nÃ¨re la matrice des distance entre les arbres
+#à partir d'une liste d'arbres (ie une forêt), la fonction distance_matrix génère la matrice des distance entre les arbres
 distance_matrix=function(liste_arbres,test){
   distance_matrix=matrix(0, nTree, nTree)
   l=1;
@@ -49,40 +49,22 @@ distance_matrix=function(liste_arbres,test){
 }
 
 
-
-#plot_forest calcule Ã  partir d'une forÃªt le risque quadratique sur successivement 1,2,3, ..., nTree arbres
-#la mÃ©thode d'aggrÃ©gation dans la forÃªt est ici une moyenne
+#plot_forest calcule à partir d'une forêt le risque quadratique sur successivement 1,2,3, ..., nTree arbres
+#la méthode d'aggrégation dans la forêt est ici une moyenne
 plot_forest=function(liste_arbres, test_set, nTree){
   #test_set=test
-  ntree=length(liste_arbres)
-  
-  mse=matrix(0, 1 , ntree)
+  mse=matrix(0, 1 , nTree)
   sum=matrix(0, 1, dim(test_set)[1])
   
-  for (i in 1:ntree){
-
+  for (i in 1:nTree){
+    
     sum=sum+predict(liste_arbres[[i]], test_set)
     pred=sum/i
     mse_arbre=mean((pred-test_set$feature_to_predict)^2)
     mse[1,i]=mse_arbre
   }
-  data=data.frame(cbind(t(t(1:ntree)), t(mse)))
+  data=data.frame(cbind(t(t(1:nTree)), t(mse)))
   return(data)
   # return(ggplot(data, aes(x=X1, y=X2)))
-
+  
 }
-
-# plot_forest_poids=function(liste_arbres, tab_poids,test_set, nTree){
-#   test_set=test
-#   n=dim(test_set)[1]
-#   pred=matrix(0, n , nTree)
-#   mse=matrix(0, 1, n)
-#   renormaliseur
-# 
-#   for (i in 1:nTree){
-#     pred[,i]=predict(liste_arbres[[i]], test_set)
-#   }  
-#   
-  
-  
-#}

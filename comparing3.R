@@ -1,10 +1,11 @@
-
-# choix les plus differents
-# ponderation : optimisation mydata = ( [train1,train2], test)
-mydata <- read.table("D:/P3A/P3a-master/data3.csv",sep=";",header=TRUE)
+# choix parngon
+# ponderation : exp
+mydata <- read.table("D:/P3A/P3a-master/data1.csv",sep=";",header=TRUE)
 
 source("D:/P3A/P3a-master/generate_dist.R")
 source("D:/P3A/P3a-master/max_dist.R")
+source("D:/P3A/P3a-master/agg_exp.R")
+source("D:/P3A/P3a-master/parangon.R")
 library(gridExtra)
 library(nnls)
 library(randomForest)
@@ -42,11 +43,11 @@ g1=ggplot(plot_forest(liste_arbres, cross_test, nTree), aes(X1, X2))+geom_point(
 g1
 
 #on calcule la matrice des distances (cette étape est celle qui prend le plus de temps)
-d=distance_matrix(liste_arbres,train2)
+
 
 k = 20 #nmobre d'arbres que l'on souhaite garder dans la foret
-res=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
-tab_indices=res[[1]] #on récupère le tableau des indices des arbres les plus distincts
+res=parangon(liste_arbres,train2) #indice des arbres à garder dans la foret initiale
+tab_indices=res #on récupère le tableau des indices des arbres les plus distincts
 #poids=res[[2]] #ainsi que leur poids
 
 #on récupère les arbres à garder
@@ -55,17 +56,8 @@ for (i in tab_indices){
   #append(liste_arbres_distincts,liste_arbres[[i]])
   liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
 }
-v = train2[,"feature_to_predict"]
-A = matrix(0,train2_dim,k)
-for(i in 1:k){
-  A[,i] = predict(liste_arbres_distincts[[i]], train2)
-}
-
-fit = nnls(A,v)
-poids = coef(fit)
-s = sum(poids)
-poids = poids/s
-
+k = length(tab_indices)
+poids = poids_exp(liste_arbres_distincts,train2)
 #on trace la diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés
 g2=ggplot(plot_forest(liste_arbres_distincts, cross_test, k), aes(x = X1, y=X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés")

@@ -1,16 +1,17 @@
 
 # choix les plus differents
 # ponderation : optimisation mydata = ( [train1,train2], test)
-mydata <- read.table("D:/P3A/P3a-master/data3.csv",sep=";",header=TRUE)
+mydata <- read.table("D:/P3A/P3a-master/data1.csv",sep=";",header=TRUE)
 
 source("D:/P3A/P3a-master/generate_dist.R")
 source("D:/P3A/P3a-master/max_dist.R")
+source("D:/P3A/P3a-master/brute_force.R")
 library(gridExtra)
 library(nnls)
 library(randomForest)
 library(ggplot2)
 
-nTree=200 #on choisit le nombre d'arbres dans la forêt
+nTree=25 #on choisit le nombre d'arbres dans la forêt
 library(dummy)
 
 
@@ -44,7 +45,7 @@ g1
 #on calcule la matrice des distances (cette étape est celle qui prend le plus de temps)
 d=distance_matrix(liste_arbres,train2)
 
-k = 20 #nmobre d'arbres que l'on souhaite garder dans la foret
+k = 10 #nmobre d'arbres que l'on souhaite garder dans la foret
 res=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
 tab_indices=res[[1]] #on récupère le tableau des indices des arbres les plus distincts
 #poids=res[[2]] #ainsi que leur poids
@@ -80,7 +81,49 @@ for (i in 1:k){
 }
 
 #on calcule l'erreur quadratique pour notre forêt final
-mean((pred-cross_test$feature_to_predict)^2)
+m1 = mean((pred-cross_test$feature_to_predict)^2)
+
+
+
+
+
+tab_indices = brute_force(liste_arbres,train2,nTree,k)
+
+#on récupère les arbres à garder
+liste_arbres_distincts=NULL 
+for (i in tab_indices){
+  #append(liste_arbres_distincts,liste_arbres[[i]])
+  liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
+}
+v = train2[,"feature_to_predict"]
+A = matrix(0,train2_dim,k)
+for(i in 1:k){
+  A[,i] = predict(liste_arbres_distincts[[i]], train2)
+}
+
+fit = nnls(A,v)
+poids = coef(fit)
+s = sum(poids)
+poids = poids/s
+
+
+
+
+#on veut voir le résultat avec pondération
+pred=0;
+for (i in 1:k){
+  pred=pred+predict(liste_arbres_distincts[[i]], cross_test)*poids[i]
+}
+
+#on calcule l'erreur quadratique pour notre forêt final
+m2 = mean((pred-cross_test$feature_to_predict)^2)
+
+
+
+
+
+
+
 
 
 #on trace tout sur un même graphique
@@ -90,7 +133,8 @@ res_foret_initiale$fill="foret initiale"
 res_foret_selectionnee=plot_forest(liste_arbres_distincts, cross_test, k)
 res_foret_selectionnee$fill="foret arbres diff�rents, non pond�r�s"
 data_to_plot=rbind(res_foret_initiale, res_foret_selectionnee)
-data_to_plot=rbind(data_to_plot, c(k, mean((pred-cross_test$feature_to_predict)^2), "foret arbre differents ponderes"))
+data_to_plot=rbind(data_to_plot, c(k, m1, "foret arbre differents ponder�s"))
+data_to_plot=rbind(data_to_plot, c(k, m2, "foret meuilleurs arbres ponder�s"))
 data_to_plot$X1=as.numeric(data_to_plot$X1)
 data_to_plot$X2=as.numeric(data_to_plot$X2)
 
