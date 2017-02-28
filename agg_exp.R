@@ -1,8 +1,8 @@
 #pondération avec des poids exponentiels
-agg_exp=function(liste_arbres_distincts, alpha,test){
+agg_exp=function(liste_arbres_distincts, alpha,test,k){
   pred=0;
   S=0
-  k=length(liste_arbres_distincts)
+ 
   for (i in 1:k){
     poids_exp=exp(-alpha*liste_arbres_distincts[[i]]$mse)
     pred=pred+predict(liste_arbres_distincts[[i]], test)*poids_exp
@@ -13,17 +13,17 @@ agg_exp=function(liste_arbres_distincts, alpha,test){
   return(pred)
 }
 
-mse_agg_exp=function(liste_arbres_distincts, alpha, test){
-  pred=agg_exp(liste_arbres_distincts, alpha,test)
+mse_agg_exp=function(liste_arbres_distincts, alpha, test,k){
+  pred=agg_exp(liste_arbres_distincts, alpha,test,k)
   return(mean((pred-test$feature_to_predict)^2))
 }
 
-agg_exp_liste_alpha=function(liste_arbres_distincts, test, liste_alpha){
+agg_exp_liste_alpha=function(liste_arbres_distincts, test, liste_alpha,k){
   l=length(liste_alpha)
   i=1
   tab=matrix(0,1,l)
   for(alpha in liste_alpha){
-    tab[i]=mse_agg_exp(liste_arbres_distincts, alpha, test)
+    tab[i]=mse_agg_exp(liste_arbres_distincts, alpha, test,k)
     i=i+1
   }
   return(tab)
@@ -36,8 +36,8 @@ agg_exp_liste_alpha=function(liste_arbres_distincts, test, liste_alpha){
 # pred=agg_exp(liste_arbres_distincts, 0.00175)
 
 #il faudra rajouter un jeu de données de cross validation
-alpha_opt=function(liste_arbres_distincts, test, liste_alpha){
-  tab=agg_exp_liste_alpha(liste_arbres_distincts, test, liste_alpha)
+alpha_opt=function(liste_arbres_distincts, test, liste_alpha,k){
+  tab=agg_exp_liste_alpha(liste_arbres_distincts, test, liste_alpha,k)
   m=which.min(tab)
   return(liste_alpha[m])
 }
@@ -46,16 +46,16 @@ alpha_opt=function(liste_arbres_distincts, test, liste_alpha){
 
 
 #crer une finction poids 
-poids_exp = function(liste_arbres_distincts, test){
-  liste_alpha = seq(from=0, to = 0.0003, by=0.000005)
-  res=agg_exp_liste_alpha(liste_arbres_distincts, test, liste_alpha)
+poids_exp = function(liste_arbres_distincts, test,k){
+  liste_alpha = seq(from=0, to = 0.0015, by=0.0001)
+  res=agg_exp_liste_alpha(liste_arbres_distincts, test, liste_alpha,k)
   plot(liste_alpha, res)
-  alpha_opt = alpha_opt(liste_arbres_distincts, test,liste_alpha)
+  alpha_opt = alpha_opt(liste_arbres_distincts, test,liste_alpha,k)
   print(alpha_opt)
   pred=0;
   S=0
   poids = rep(0,k)
-  k=length(liste_arbres_distincts)
+  
   for (i in 1:k){
     poid_exp=exp(-alpha_opt*liste_arbres_distincts[[i]]$mse)
     poids[[i]] = poid_exp

@@ -4,18 +4,18 @@
 #la fonction max_dist est l'implémentation de l'algorithme qui à partir de la matrice des distances 
 #renvoie les éléments les plsu éloignés
 
-max_dist=function(d, N,k){
-  index <- -1 
-  max_dis = -1
+max_dist=function(d, N,k,best){
+  #index <- -1 
+  #max_dis = -1
   res <- rep(0, k)
-  for (p in 1:N){   
-      num_chosen <- p
+     
+      num_chosen <- best
       
       chosen <- rep(0,N)
       chosen[num_chosen] <- 1
       
-      a <- rep(0, k)
-      a[1] <- num_chosen
+      res <- rep(0, k)
+      res[1] <- num_chosen
       
       dis_to_set <-rep(0,N)
       
@@ -32,7 +32,7 @@ max_dist=function(d, N,k){
                   far <- j
               }
           }
-          a[i] <- far
+          res[i] <- far
           chosen[far]<-1
           for( j in 1:N){
             if(chosen[j]==0 ){
@@ -41,22 +41,10 @@ max_dist=function(d, N,k){
           }
           
       }
-      current_dist <- -1
-      for ( i in 1:k){
-          for(j in 1:k){
-              if(d[a[i],a[j]]>current_dist){
-                current_dist <- d[a[i],a[j]]
-              }  
-          }
-      }
-      if(current_dist>max_dis){
-        max_dist <- current_dist
-        index <- p
-        for(m in 1:k){
-          res[m] = a[m]
-        }
-      }
-  }
+      
+      
+      
+  
   
   
   w =  rep(0, k)

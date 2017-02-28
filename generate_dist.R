@@ -1,6 +1,6 @@
 library(randomForest)
 library(ggplot2)
-
+library(gtools)
 
 #la fonction generate forest génère une forêt de taille nTree à partir du jeu de données train
 generate_forest=function(nTree, train,test){
@@ -67,4 +67,86 @@ plot_forest=function(liste_arbres, test_set, nTree){
   return(data)
   # return(ggplot(data, aes(x=X1, y=X2)))
   
+}
+
+
+#determine a confidance level by choosing i  trees randomly and compute
+#max and min values we can get
+confidence_intervall=function(liste_arbres, test_set, nTree,iteration_num){
+  #test_set=test
+  low_curve = rep(-1,nTree)
+  up_curve = rep(-1,nTree)
+  
+  rd_index=1:nTree
+  mse=rep(0 , nTree)
+  sum=rep(0, train2_dim)
+  
+  
+  for(p in 1:iteration_num){
+    rd_index = permute(rd_index)
+    for(i in 1:nTree){
+      sum=sum+predict(liste_arbres[[i]], test_set)
+      pred=sum/i
+      mse_arbre=mean((pred-test_set$feature_to_predict)^2)
+      if(low_curve[i]==-1 | mse_arbre<low_curve[i]){
+        low_curve[i]=mse_arbre
+      }
+      if(mse_arbre>up_curve[i]){
+        up_curve[i]=mse_arbre
+      }
+    }
+    
+  }
+  
+  return(c(low_curve,up_curve))
+  # return(ggplot(data, aes(x=X1, y=X2)))
+  
+}
+
+
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
 }
