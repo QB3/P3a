@@ -1,11 +1,12 @@
 
 # choix les plus differents
 # ponderation : optimisation mydata = ( [train1,train2], test)
-mydata <- read.table("D:/P3A/P3a-master/data5.csv",sep=";",header=TRUE)
-#confidence_int = read.table("D:/P3A/P3a-master/confidence_int_data2.csv",sep=";",header=TRUE)
+mydata <- read.table("D:/P3A/P3a-master/data2.csv",sep=";",header=TRUE)
+confidence_int = read.table("D:/P3A/P3a-master/confidence_int_data2.csv",sep=";",header=TRUE)
 
 source("D:/P3A/P3a-master/generate_dist.R")
 source("D:/P3A/P3a-master/max_dist.R")
+source("D:/P3A/P3a-master/agg_exp.R")
 library(gridExtra)
 library(nnls)
 library(randomForest)
@@ -74,6 +75,7 @@ for (i in tab_indices){
 v = train2[,"feature_to_predict"]
 A = NULL
 means = NULL
+meansexp = NULL
 id = NULL
 for(selec_num in 1:k){
   id = c(id,selec_num)
@@ -85,12 +87,22 @@ for(selec_num in 1:k){
   poid = coef(fit)
   s = sum(poid)
   poid = poid/s
+  
+  
+  predexp =agg_exp(liste_arbres_distincts, 0.0015,cross_test,selec_num)
   pred=0;
   for (i in 1:selec_num){
-    pred=pred+predict(liste_arbres_distincts[[i]], cross_test)*poid[i]
+    yy = predict(liste_arbres_distincts[[i]], cross_test)
+    pred=pred+yy*poid[i]
+    
+    
   }
   m = mean((pred-cross_test$feature_to_predict)^2)
+  mexp = mean((predexp-cross_test$feature_to_predict)^2)
   means = c(means,m)
+  meansexp = c(meansexp,mexp)
+  
+  
 }
 
 #on trace la diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sÃ©lectionnÃ©s, non pondÃ©rÃ©s
@@ -109,48 +121,73 @@ mean((pred-cross_test$feature_to_predict)^2)
 
 #printing the intervall of confidence for initial trees (upper curve is the
 #maximum mse we can get if we select trees differently and lower is the minimal
-library(gtools)
-iteration_num = 400
+#library(gtools)
+#iteration_num = 400
 
-values = matrix(-1,iteration_num,nTree)
-low_curve = rep(-1,nTree)
-up_curve = rep(-1,nTree)
+#low_curve = rep(-1,nTree)
+#up_curve = rep(-1,nTree)
 
-rd_index=1:nTree
-
+#rd_index=1:nTree
 
 
-for(p in 1:iteration_num){
-  print(p)
-  sum=rep(0, dim(cross_test)[1])
-  rd_index = permute(rd_index)
-  
-  for(i in 1:nTree){
-    sum=sum+predict(liste_arbres[[rd_index[i]]], cross_test)
-    pred=sum/i
-    mse_arbre=mean((pred-cross_test$feature_to_predict)^2)
-    values[p,i]=mse_arbre
-    if(low_curve[i]==-1 | mse_arbre<low_curve[i]){
-      low_curve[i]=mse_arbre
-    }
-    if(mse_arbre>up_curve[i]){
-      up_curve[i]=mse_arbre
-    }
-  }
-}  
 
-for(i in 1:nTree){
-  y = sort(values[,i])
-  low_curve[i]= y[floor(iteration_num*5/100)]
-  up_curve[i] = y[floor(iteration_num*95/100)]
-  
-}
+#for(p in 1:iteration_num){
+#  sum=rep(0, dim(cross_test)[1])
+#  rd_index = permute(rd_index)
+#  
+#  for(i in 1:nTree){
+#    sum=sum+predict(liste_arbres[[rd_index[i]]], cross_test)
+#    pred=sum/i
+#    mse_arbre=mean((pred-cross_test$feature_to_predict)^2)
+#    if(low_curve[i]==-1 | mse_arbre<low_curve[i]){
+#      low_curve[i]=mse_arbre
+#    }
+#    if(mse_arbre>up_curve[i]){
+#      up_curve[i]=mse_arbre
+#    }
+#  }
+
+#}
 #confidence_int = data.frame(cbind(low_curve,up_curve))
-#confidence_int["x"]=1:nTree
+confidence_int["x"]=1:nTree
 
-#print confidence area :
+
+
+
+#on trace tout sur un mÃªme graphique
+
+
+res_foret_selectionnee=plot_forest(liste_arbres_distincts, cross_test, k)
+res_foret_selectionnee$fill="foret arbres différents, non pondérés"
+
+pondere = data.frame(cbind(id,means))
+pondere$fill = "foret arbre differents ponderation optimale"
+names(pondere) <- names(res_foret_selectionnee) 
+
+pondexp = data.frame(cbind(id,meansexp))
+pondexp$fill = "foret arbre differents ponderation exponontielle"
+names(pondexp) <- names(res_foret_selectionnee) 
+
+lower_curve = data.frame(cbind(id,confidence_int["low_curve"]))
+lower_curve$fill = "meilleure performance sans pondération"
+names(lower_curve) <- names(res_foret_selectionnee) 
+
+upper_curve = data.frame(cbind(id,confidence_int["up_curve"]))
+upper_curve$fill = "pire performance sans pondération"
+names(upper_curve) <- names(res_foret_selectionnee) 
+
+data_to_plot=data.frame(rbind(res_foret_selectionnee,pondexp,pondere,lower_curve,upper_curve))
+names(data_to_plot)= c("x","y","fill")
+#data_to_plot=rbind( res_foret_selectionnee,pondere)
+
+#data_to_plot$X1=as.numeric(data_to_plot$X1)
+#data_to_plot$X2=as.numeric(data_to_plot$X2)
+
+
+
+#prepare the plot of the confifdance area:
 a = 1:nTree
-df = data.frame(cbind(a,low_curve,up_curve))
+df = data.frame(cbind(a,confidence_int["low_curve"],confidence_int["up_curve"]))
 names(df)= c("x","ymin","ymax")
 g1 <- ggplot(df) + 
   stat_smooth(aes(x = x, y = ymin, colour = "min"), method = "loess", se = FALSE) +
@@ -172,42 +209,9 @@ g1+
               fill = "grey", alpha = 0.4)
 
 
-#on trace tout sur un mÃªme graphique
-
-
-res_foret_selectionnee=plot_forest(liste_arbres_distincts, cross_test, k)
-res_foret_selectionnee$fill="foret arbres différents, non pondérés"
-
-pondere = data.frame(cbind(id,means))
-pondere$fill = "foret arbre differents ponderes"
-names(pondere) <- names(res_foret_selectionnee) 
-
-lower_curve = data.frame(cbind(id,low_curve))
-lower_curve$fill = "meilleure performance sans pondération"
-names(lower_curve) <- names(res_foret_selectionnee) 
-
-upper_curve = data.frame(cbind(id,up_curve))
-upper_curve$fill = "pire performance sans pondération"
-names(upper_curve) <- names(res_foret_selectionnee) 
-
-data_to_plot=data.frame(rbind(res_foret_selectionnee,pondere,lower_curve,upper_curve))
-#data_to_plot=rbind( res_foret_selectionnee,pondere)
-names(data_to_plot) <- c("x","y","fill")
-#names(df2)= names(data_to_plot)
-#data_to_plot = rbind(data_to_plot,df2)
-#data_to_plot$X1=as.numeric(data_to_plot$X1)
-#data_to_plot$X2=as.numeric(data_to_plot$X2)
-
 #le graphique final
-#p1 = ggplot(data_to_plot, aes(x=X, y=pon, color=fill))+geom_point()+ylab(label="mse")+xlab(label="nombre d'arbres")+
-#  labs(title="Erreur quadratique en fonction du nombre d'arbres")
- 
-#p1 
-p1 = ggplot(data_to_plot[1:400,], aes(x=x, y=y, color=fill))+
-  geom_point()+stat_smooth(data=data_to_plot[401:600,],aes(x = x, y = y, colour = "min"), method = "loess", se = FALSE) +
-  stat_smooth(data=data_to_plot[601:800,],aes(x = x, y = y, colour = "max"), method = "loess", se = FALSE)
+p1 = ggplot(data_to_plot[1:600,], aes(x=x, y=y, color=fill))+
+  geom_point()+stat_smooth(data=data_to_plot[601:800,],aes(x = x, y = y, colour = "min"), method = "loess", se = FALSE) +
+  stat_smooth(data=data_to_plot[801:1000,],aes(x = x, y = y, colour = "max"), method = "loess", se = FALSE)
 p1+geom_ribbon(data =df2, aes(x = x, ymin = ymin, ymax =ymax), fill="grey", alpha = 0.4,inherit.aes=FALSE)+
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres")
-
-
-

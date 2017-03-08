@@ -1,8 +1,8 @@
 
 # choix les plus differents
 # ponderation : optimisation mydata = ( [train1,train2], test)
-mydata <- read.table("D:/P3A/P3a-master/data4.csv",sep=";",header=TRUE)
-confidence_int = read.table("D:/P3A/P3a-master/confidence_int_data4.csv",sep=";",header=TRUE)
+mydata <- read.table("D:/P3A/P3a-master/data5.csv",sep=";",header=TRUE)
+confidence_int = read.table("D:/P3A/P3a-master/confidence_int_data5.csv",sep=";",header=TRUE)
 
 source("D:/P3A/P3a-master/generate_dist.R")
 source("D:/P3A/P3a-master/max_dist.R")
@@ -77,9 +77,11 @@ A = NULL
 means = NULL
 meansexp = NULL
 id = NULL
+alphaOpt = alpha_opt(liste_arbres_distincts,cross_test,seq(from=0, to = 0.15, by=0.0005),20)
+
 for(selec_num in 1:k){
   id = c(id,selec_num)
-  
+  print(slec_num)
   A = cbind(A, predict(liste_arbres_distincts[[selec_num]], train2))
   
   
@@ -89,7 +91,7 @@ for(selec_num in 1:k){
   poid = poid/s
   
   
-  predexp =agg_exp(liste_arbres_distincts, 0.0015,cross_test,selec_num)
+  predexp =agg_exp(liste_arbres_distincts, alphaOpt,cross_test,selec_num)
   pred=0;
   for (i in 1:selec_num){
     yy = predict(liste_arbres_distincts[[i]], cross_test)
@@ -176,15 +178,42 @@ upper_curve = data.frame(cbind(id,confidence_int["up_curve"]))
 upper_curve$fill = "pire performance sans pondération"
 names(upper_curve) <- names(res_foret_selectionnee) 
 
-data_to_plot=data.frame(rbind(rbind( rbind(rbind(res_foret_selectionnee,upper_curve),lower_curve),pondexp),pondere))
-z = data_to_plot[data_to_plot$X1>4,]
+data_to_plot=data.frame(rbind(res_foret_selectionnee,pondexp,pondere,lower_curve,upper_curve))
+names(data_to_plot)=c("x","y","fill")
 #data_to_plot=rbind( res_foret_selectionnee,pondere)
 
 #data_to_plot$X1=as.numeric(data_to_plot$X1)
 #data_to_plot$X2=as.numeric(data_to_plot$X2)
 
-#le graphique final
-p1 = ggplot(data_to_plot[data_to_plot$X1>4,], aes(x=X1, y=X2, color=fill))+geom_point()+ylab(label="mse")+xlab(label="nombre d'arbres")+
-  labs(title="Erreur quadratique en fonction du nombre d'arbres")
 
-p1 
+
+#prepare the plot of the confifdance area:
+a = 1:nTree
+df = data.frame(cbind(a,confidence_int["low_curve"],confidence_int["up_curve"]))
+names(df)= c("x","ymin","ymax")
+g1 <- ggplot(df) + 
+  stat_smooth(aes(x = x, y = ymin, colour = "min"), method = "loess", se = FALSE) +
+  stat_smooth(aes(x = x, y = ymax, colour = "max"), method = "loess", se = FALSE)+ylab(label="mse")+xlab(label="nombre d'arbres")+
+  labs(title="intervalle de confiance à 90%")
+g1
+
+# build plot object for rendering 
+gg1 <- ggplot_build(g1)
+
+# extract data for the loess lines from the 'data' slot
+df2 <- data.frame(x = gg1$data[[1]]$x,
+                  ymin = gg1$data[[1]]$y,
+                  ymax = gg1$data[[2]]$y) 
+
+# use the loess data to add the 'ribbon' to plot 
+g1+
+  geom_ribbon(data = df2, aes(x = x, ymin = ymin, ymax = ymax),
+              fill = "grey", alpha = 0.4)
+
+
+#le graphique final
+p1 = ggplot(data_to_plot[1:600,], aes(x=x, y=y, color=fill))+
+  geom_point()+stat_smooth(data=data_to_plot[601:800,],aes(x = x, y = y, colour = "min"), method = "loess", se = FALSE) +
+  stat_smooth(data=data_to_plot[801:1000,],aes(x = x, y = y, colour = "max"), method = "loess", se = FALSE)
+p1+geom_ribbon(data =df2, aes(x = x, ymin = ymin, ymax =ymax), fill="grey", alpha = 0.4,inherit.aes=FALSE)+
+  xlab("nombre d'arbres")+ylab("erreur quadratique")

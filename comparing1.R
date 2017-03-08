@@ -1,7 +1,7 @@
 
 # choix les plus differents
 # ponderation : exp
-mydata <- read.table("D:/P3A/P3a-master/data3.csv",sep=";",header=TRUE)
+mydata <- read.table("D:/P3A/P3a-master/data1.csv",sep=";",header=TRUE)
 
 source("D:/P3A/P3a-master/generate_dist.R")
 source("D:/P3A/P3a-master/max_dist.R")
@@ -42,11 +42,24 @@ g1=ggplot(plot_forest(liste_arbres, cross_test, nTree), aes(X1, X2))+geom_point(
 
 g1
 
+
+
+best_tree = 0
+best_error =-1
+for(i in 1:nTree){
+  prediction = predict(liste_arbres[[i]], train2)
+  m = mean((prediction-train2$feature_to_predict)^2)
+  if(best_error==-1 | m<best_error){
+    best_tree = i
+    best_error = m
+  }
+}
+
 #on calcule la matrice des distances (cette étape est celle qui prend le plus de temps)
 d=distance_matrix(liste_arbres,train2)
 
 k = 20 #nmobre d'arbres que l'on souhaite garder dans la foret
-res=max_dist(d, nTree, k) #indice des arbres à garder dans la foret initiale
+res=max_dist(d, nTree, k,best_tree) #indice des arbres à garder dans la foret initiale
 tab_indices=res[[1]] #on récupère le tableau des indices des arbres les plus distincts
 #poids=res[[2]] #ainsi que leur poids
 
@@ -56,8 +69,8 @@ for (i in tab_indices){
   #append(liste_arbres_distincts,liste_arbres[[i]])
   liste_arbres_distincts=c(liste_arbres_distincts, list(liste_arbres[[i]]))
 }
-p = agg_exp(liste_arbres_distincts,0.0015,train2)
-poids = poids_exp(liste_arbres_distincts,train2)
+
+poids = poids_exp(liste_arbres_distincts,train2,k)
 #on trace la diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés
 g2=ggplot(plot_forest(liste_arbres_distincts, cross_test, k), aes(x = X1, y=X2))+geom_point()+xlab(label="nombre d'arbres")+ylab(label="mse")+
   labs(title="diminution de l'erreur quadratique en fonction du nombre d'arbres, arbres sélectionnés, non pondérés")
