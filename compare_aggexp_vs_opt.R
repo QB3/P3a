@@ -1,8 +1,8 @@
 
 # choix les plus differents
 # ponderation : optimisation mydata = ( [train1,train2], test)
-mydata <- read.table("D:/P3A/P3a-master/data5.csv",sep=";",header=TRUE)
-confidence_int = read.table("D:/P3A/P3a-master/confidence_int_data5.csv",sep=";",header=TRUE)
+mydata <- read.table("D:/P3A/P3a-master/data3.csv",sep=";",header=TRUE)
+confidence_int = read.table("D:/P3A/P3a-master/confidence_int_data3.csv",sep=";",header=TRUE)
 
 source("D:/P3A/P3a-master/generate_dist.R")
 source("D:/P3A/P3a-master/max_dist.R")
@@ -81,7 +81,7 @@ alphaOpt = alpha_opt(liste_arbres_distincts,cross_test,seq(from=0, to = 0.15, by
 
 for(selec_num in 1:k){
   id = c(id,selec_num)
-  print(slec_num)
+  print(selec_num)
   A = cbind(A, predict(liste_arbres_distincts[[selec_num]], train2))
   
   
